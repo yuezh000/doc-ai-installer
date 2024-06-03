@@ -39,6 +39,10 @@ PORT=8080
 INSTALL_ROOT=$1
 VENDOR=26707
 FORCED=0
+DB_NAME=doc_ai
+DB_USER=doc_ai
+DB_PASSWORD=
+CONCURRENCY=4
 
 function show_help {
     echo ""
@@ -51,6 +55,10 @@ function show_help {
     echo "        -o|--ocr-image <ocr-image> | default $OCR_IMAGE | optional  "
     echo "        -h|--host <host> | default $HOST | optional  "
     echo "        -p|--port <port> | default $PORT | optional  "
+    echo "        -c|--concurrency <concurrency> | default $CONCURRENCY | optional  "
+    echo "        --db-name <db-name> | default $DB_NAME | optional  "
+    echo "        --db-user <db-user> | default $DB_USER | optional  "
+    echo "        --db-password <db-password> "
     echo "        -f|--force | optional  "
     echo ""
     exit -1
@@ -79,6 +87,22 @@ function handle_params {
             PORT=$2
             shift
             shift
+        elif [[ $1 == "-c" || $1 == "--concurrency" ]] ; then
+            CONCURRENCY=$2
+            shift
+            shift
+        elif [[ $1 == "--db-name" ]] ; then
+            DB_NAME=$2
+            shift
+            shift
+        elif [[ $1 == "--db-user" ]] ; then
+            DB_USER=$2
+            shift
+            shift
+        elif [[ $1 == "--db-password" ]] ; then
+            DB_PASSWORD=$2
+            shift
+            shift
         elif [[ $1 == "-f" || $1 == "--force" ]] ; then
             FORCED=1
             shift
@@ -99,6 +123,10 @@ fi
 
 if [[ -z $HOST ]] ; then
     show_error "ERROR: failed to determinate host ip, please specify it with option -h|--host."
+fi
+
+if [[ -z $DB_PASSWORD ]] ; then
+    show_error "ERROR: please specify db password with option --db-password."
 fi
 
 if [[ $FORCED == 0 && "$(docker ps -a -q -f name=doc-ai-aio)" ]]; then
@@ -174,7 +202,7 @@ if [[ ! -d  $INSTALL_ROOT/docai-api ]] ; then
   touch $INSTALL_ROOT/docai-api/logs/dummuy.log
 fi
 
-if [[ ! -f $INSTALL_ROOT/hasp_$VENDOR.ini ]] ; then
+if [[ $FORCED == 1 || ! -f $INSTALL_ROOT/hasp_$VENDOR.ini ]] ; then
   {
     echo "errorlog=1"
     echo "requestlog=1" 
@@ -183,28 +211,28 @@ if [[ ! -f $INSTALL_ROOT/hasp_$VENDOR.ini ]] ; then
   }> $INSTALL_ROOT/hasp_$VENDOR.ini
 fi
 
-if [[ ! -f $INSTALL_ROOT/.env ]] ; then
+if [[ $FORCED == 1 || ! -f $INSTALL_ROOT/.env ]] ; then
   {
     echo "# Env file for docai-api" 
     echo "DOC_AI_INSTALL_ROOT=$INSTALL_ROOT"
     echo "DOC_AI_INSTALL_VENDOR=$VENDOR" 
     echo "DOC_AI_AIO_IMAGE=$AIO_IMAGE" 
     echo "DOC_AI_OCR_IMAGE=$OCR_IMAGE"
-    echo "DOC_AI_OCR_API_REPLICAS=4"
-    echo "QUEUE_WORKER_NUM=4"
-    echo "DOC_AI_MYSQL_DB_NAME=doc_ai" 
-    echo "DOC_AI_MYSQL_USER=doc_ai" 
-    echo "DOC_AI_MYSQL_PASSWORD=Passw0rd" 
+    echo "DOC_AI_OCR_API_REPLICAS=$CONCURRENCY"
+    echo "QUEUE_WORKER_NUM=$CONCURRENCY"
+    echo "DOC_AI_MYSQL_DB_NAME=$DB_NAME" 
+    echo "DOC_AI_MYSQL_USER=$DB_USER" 
+    echo "DOC_AI_MYSQL_PASSWORD=$DB_PASSWORD" 
     echo "DOC_AI_HOST_IP=$HOST" 
     echo "DOC_AI_WEB_PORT=$PORT"
     echo "DOC_AI_VENDOR=$VENDOR"
-    echo "docai_ocr_concurrency=4"
+    echo "docai_ocr_concurrency=$CONCURRENCY"
     echo "docai_ocr_accessKeyId=xxxx"
     echo "docai_ocr_accessKeySecret=yyyy"
     echo "docai_ocr_endpoint=ocr-api:9090"
-    echo "DB_DATABASE=doc_ai"
-    echo "DB_USERNAME=doc_ai"
-    echo "DB_PASSWORD=Passw0rd"
+    echo "DB_DATABASE=$DB_NAME"
+    echo "DB_USERNAME=$DB_USER"
+    echo "DB_PASSWORD=$DB_PASSWORD"
     echo "DOC_SERVICE_HOST=http://localhost:5000"
     echo "DOC_SERVICE_TIMEOUT=1800"
   } > $INSTALL_ROOT/.env
