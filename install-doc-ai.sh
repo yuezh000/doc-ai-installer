@@ -108,8 +108,10 @@ function handle_params {
             shift
         elif [[ $1 == -* || $1 == --* ]] ; then
             OTHER_OPTS="$OTHER_OPTS $1"
-            OTHER_OPTS="$OTHER_OPTS $2"
-            shift
+            if [[ $2 != -* && $2 != --* ]] ; then
+                OTHER_OPTS="$OTHER_OPTS $2"
+                shift
+            fi
             shift
         else
             INSTALL_ROOT=$1
@@ -131,7 +133,8 @@ if [[ -z $HOST ]] ; then
 fi
 
 if [[ -z $DB_PASSWORD ]] ; then
-    show_error "ERROR: please specify db password with option --db-password."
+    echo "Generating random password for mysql. You can check .env file."
+    DB_PASSWORD=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 10)
 fi
 
 if [[ $FORCED == 0 && "$(docker ps -a -q -f name=doc-ai-aio)" ]]; then
