@@ -106,6 +106,11 @@ function handle_params {
         elif [[ $1 == "-f" || $1 == "--force" ]] ; then
             FORCED=1
             shift
+        elif [[ $1 == -* || $1 == --* ]] ; then
+            OTHER_OPTS="$OTHER_OPTS $1"
+            OTHER_OPTS="$OTHER_OPTS $2"
+            shift
+            shift
         else
             INSTALL_ROOT=$1
             break
