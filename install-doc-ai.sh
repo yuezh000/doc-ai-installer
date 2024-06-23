@@ -32,7 +32,7 @@ if [ -z "$IP" ]; then
 fi
 
 # DEFAULT PARAMETERS
-AIO_IMAGE=registry.baidubce.com/fd-maas/doc-ai-aio-encrypt:20240531-0
+AIO_IMAGE=registry.baidubce.com/fd-maas/doc-ai-aio-encrypt:20240531-1
 OCR_IMAGE=registry.baidubce.com/fd-maas/doc-ai-ocr-api:20240430-1
 HOST=$IP
 PORT=8080
